@@ -37,12 +37,18 @@ def cd_color_segmentation(img, template):
 	# Using values for Safety Orange (H: 28deg, S: 100%, V: 100%)
 	CONE_HUE = 14 # H <-H/2 where Safety Orange H=28deg
 	CONE_HUE_TOLERANCE = 5 # +- error
+	CONE_HUE_MIN = CONE_HUE - CONE_HUE_TOLERANCE
+	CONE_HUE_MAX = CONE_HUE + CONE_HUE_TOLERANCE
 
 	CONE_SATURATION = 255 # S <- 255S where S=100%
 	CONE_SATURATION_TOLERANCE = 60 # - error
+	CONE_SATURATION_MIN = CONE_SATURATION - CONE_SATURATION_TOLERANCE
+	CONE_SATURATION_MAX = CONE_SATURATION
 
 	CONE_VALUE = 255 # S <- 255S where S=100%
 	CONE_VALUE_TOLERANCE = 80 # - error
+	CONE_VALUE_MIN = CONE_VALUE - CONE_VALUE_TOLERANCE
+	CONE_VALUE_MAX = CONE_VALUE
 
 	########## RETURN VALUES ##########
 	ymin=len(img) # Set to highest value
@@ -52,6 +58,7 @@ def cd_color_segmentation(img, template):
 
 	# convert BGR color space to HSV space
 	hsvimg = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+	thresholdimg = cv2.inRange(hsvimg, (CONE_HUE_MIN, CONE_SATURATION_MIN, CONE_VALUE_MIN), (CONE_HUE_MAX, CONE_SATURATION_MAX, CONE_VALUE_MAX))
 
 	# iterate the image
 	ci=0
@@ -67,16 +74,14 @@ def cd_color_segmentation(img, template):
 					xmin=ri
 				elif ri > xmax:
 					xmax = ri
-
 				if ci < ymin:
 					ymin = ci
 				elif ci > ymax:
 					ymax = ci
-
-				img[ci,ri] = [h, 0 ,0]
 			ri+=1
 		ci+=1
-	image_print(img)
+	# image_print(img)
+	image_print(thresholdimg) # Shows the threshold based on parameters
 
 	bounding_box = ((xmin,ymin),(xmax,ymax))
 
