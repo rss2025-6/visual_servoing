@@ -68,8 +68,29 @@ def cd_sift_ransac(img, template):
 
 		########## YOUR CODE STARTS HERE ##########
 
-		x_min = y_min = x_max = y_max = 0
+		# https://docs.opencv.org/3.4/d1/de0/tutorial_py_feature_homography.html
+		dst = cv2.perspectiveTransform(pts, M)
+		img2 = cv2.polylines(img,[np.int32(dst)],True,255,3,cv2.LINE_AA)
+		image_print(img2)
 
+		# Extract bounding box
+		x_min = w
+		y_min = h
+		x_max = y_max = 0
+		for col in dst:
+			for row in col:
+				x,y = row
+				if x > x_max:
+					x_max = x
+				if x < x_min:
+					x_min = x
+				if y > y_max:
+					y_max = y
+				if y < y_min:
+					y_min = y
+				# print(f"x: {x}, y: {y}")
+		# print(f"${dst}")
+		
 		########### YOUR CODE ENDS HERE ###########
 
 		# Return bounding box
