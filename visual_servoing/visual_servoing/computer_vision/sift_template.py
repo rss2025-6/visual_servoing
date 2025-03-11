@@ -150,13 +150,14 @@ def cd_template_matching(img, template):
 				top_left = max_loc
 			bottom_right = (top_left[0] + w, top_left[1]+h)
 
-			cv2.rectangle(imgcop, top_left, bottom_right, 255, 1)
+			# draws rectangle into imgcomp
+			cv2.rectangle(imgcop, top_left, bottom_right, 255, 2)
 			# print(f"scale: {scale}, method: {method}, max_value: {max_value}")
 			
 			if best_match == None or max_value > best_match:
 				best_match = max_value
 				best_match_image = imgcop
-				bounding_box = (top_left, bottom_right)
+				bounding_box = ((top_left[0], top_left[1]), (bottom_right[0], bottom_right[1]))
 			
 		# Remember to resize the bounding box using the highest scoring scale
 		# x1,y1 pixel will be accurate, but x2,y2 needs to be correctly scaled
