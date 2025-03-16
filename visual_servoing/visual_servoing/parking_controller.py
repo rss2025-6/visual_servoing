@@ -37,9 +37,25 @@ class ParkingController(Node):
         drive_cmd = AckermannDriveStamped()
 
         #################################
-
+        
         # YOUR CODE HERE
         # Use relative position and your control law to set drive_cmd
+        error = self.relative_x - self.parking_distance
+        angle = np.arctan2(self.relative_y, self.relative_x)
+
+        if (error > 0.2):
+            drive_cmd.drive.speed=1.
+        elif (np.abs(angle)<np.pi/15 and error<0.05):
+            drive_cmd.drive.speed=0.
+        elif (np.abs(angle)<np.pi/15 ):
+            drive_cmd.drive.speed=error
+        else: 
+            drive_cmd.drive.speed = error/(10**-10 + np.abs(error))
+        
+        if error < 0:
+            drive_cmd.drive.steering_angle = -angle
+        else:
+            drive_cmd.drive.steering_angle = angle
 
         #################################
 
@@ -57,6 +73,9 @@ class ParkingController(Node):
 
         # YOUR CODE HERE
         # Populate error_msg with relative_x, relative_y, sqrt(x^2+y^2)
+        error_msg.distance_error=np.sqrt(self.relative_x**2+self.relative_y**2)-self.parking_distance
+        error_msg.x_error=self.relative_x-self.parking_distance
+        error_msg.y_error=self.relative_y
 
         #################################
         
