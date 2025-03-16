@@ -32,11 +32,58 @@ def cd_color_segmentation(img, template):
 		bbox: ((x1, y1), (x2, y2)); the bounding box of the cone, unit in px
 				(x1, y1) is the top left of the bbox and (x2, y2) is the bottom right of the bbox
 	"""
-	########## YOUR CODE STARTS HERE ##########
+	########## PARAMETERS FOR CONE COLOR SEGMENTING ##########
+	# https://docs.opencv.org/4.x/de/d25/imgproc_color_conversions.html#color_convert_rgb_hsv
+	# Using values for Safety Orange (H: 28deg, S: 100%, V: 100%)
+	CONE_HUE = 14 # H <-H/2 where Safety Orange H=28deg
+	CONE_HUE_TOLERANCE = 5 # +- error
+	CONE_HUE_MIN = CONE_HUE - CONE_HUE_TOLERANCE
+	CONE_HUE_MAX = CONE_HUE + CONE_HUE_TOLERANCE
 
-	bounding_box = ((0,0),(0,0))
+	CONE_SATURATION = 255 # S <- 255S where S=100%
+	CONE_SATURATION_TOLERANCE = 60 # - error
+	CONE_SATURATION_MIN = CONE_SATURATION - CONE_SATURATION_TOLERANCE
+	CONE_SATURATION_MAX = CONE_SATURATION
 
-	########### YOUR CODE ENDS HERE ###########
+	CONE_VALUE = 255 # S <- 255S where S=100%
+	CONE_VALUE_TOLERANCE = 80 # - error
+	CONE_VALUE_MIN = CONE_VALUE - CONE_VALUE_TOLERANCE
+	CONE_VALUE_MAX = CONE_VALUE
+
+	########## RETURN VALUES ##########
+	ymin=len(img) # Set to highest value
+	xmin=len(img[0])
+	xmax=0 # Set to lowest value
+	ymax=0
+
+	# convert BGR color space to HSV space
+	hsvimg = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+	thresholdimg = cv2.inRange(hsvimg, (CONE_HUE_MIN, CONE_SATURATION_MIN, CONE_VALUE_MIN), (CONE_HUE_MAX, CONE_SATURATION_MAX, CONE_VALUE_MAX))
+
+	# iterate the image
+	ci=0
+	for col in hsvimg:
+		ri=0
+		for row in col:
+			h, s, v = row
+			if -CONE_HUE_TOLERANCE <= CONE_HUE-h <= CONE_HUE_TOLERANCE \
+				and CONE_SATURATION-s <= CONE_SATURATION_TOLERANCE \
+				and CONE_VALUE-v <= CONE_VALUE_TOLERANCE:
+				
+				if ri < xmin:
+					xmin=ri
+				elif ri > xmax:
+					xmax = ri
+				if ci < ymin:
+					ymin = ci
+				elif ci > ymax:
+					ymax = ci
+			ri+=1
+		ci+=1
+	# image_print(img)
+	image_print(thresholdimg) # Shows the threshold based on parameters
+
+	bounding_box = ((xmin,ymin),(xmax,ymax))
 
 	# Return bounding box
 	return bounding_box
