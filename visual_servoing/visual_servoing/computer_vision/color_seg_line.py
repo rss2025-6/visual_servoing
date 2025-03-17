@@ -55,7 +55,10 @@ def cd_color_segmentation(img, template=None):
 	xmin=len(img[0])
 	xmax=0 # Set to lowest value
 	ymax=0
-
+	
+	truncate=100
+	window_size=350
+	img= img[truncate:truncate+window_size, :]
 	# convert BGR color space to HSV space
 	hsvimg = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 	thresholdimg = cv2.inRange(hsvimg, (CONE_HUE_MIN, CONE_SATURATION_MIN, CONE_VALUE_MIN), (CONE_HUE_MAX, CONE_SATURATION_MAX, CONE_VALUE_MAX))

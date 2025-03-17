@@ -21,10 +21,11 @@ from vs_msgs.msg import ConeLocation, ConeLocationPixel
 
 ######################################################
 ## DUMMY POINTS -- ENTER YOUR MEASUREMENTS HERE
-PTS_IMAGE_PLANE = [[-1, -1],
-                   [-1, -1],
-                   [-1, -1],
-                   [-1, -1]] # dummy points
+PTS_IMAGE_PLANE = [[265., 234.],
+                   [449., 249.],
+                   [489, 338],
+                   [241., 345.]] # dummy points
+
 ######################################################
 
 # PTS_GROUND_PLANE units are in inches
@@ -32,10 +33,10 @@ PTS_IMAGE_PLANE = [[-1, -1],
 
 ######################################################
 ## DUMMY POINTS -- ENTER YOUR MEASUREMENTS HERE
-PTS_GROUND_PLANE = [[-1, -1],
-                    [-1, -1],
-                    [-1, -1],
-                    [-1, -1]] # dummy points
+PTS_GROUND_PLANE = [[40., 6.5],
+                    [33.5, -12.],
+                    [16.25, -8.],
+                    [15., 3.25]] # dummy points
 ######################################################
 
 METERS_PER_INCH = 0.0254
@@ -80,6 +81,11 @@ class HomographyTransformer(Node):
         relative_xy_msg.y_pos = y
 
         self.cone_pub.publish(relative_xy_msg)
+
+        self.get_logger().info(f"CONE AT {x:.2f}, {y:.2f}")
+
+        # create a marker where the cone is
+        self.draw_marker(x, y, "/laser")
 
 
     def transformUvToXy(self, u, v):

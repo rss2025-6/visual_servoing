@@ -16,49 +16,76 @@ class ParkingController(Node):
     def __init__(self):
         super().__init__("parking_controller")
 
-        self.declare_parameter("drive_topic")
-        DRIVE_TOPIC = self.get_parameter("drive_topic").value # set in launch file; different for simulator vs racecar
+        self.declare_parameter("drive_topic", "/vesc/low_level/input/navigation")
+        self.DRIVE_TOPIC = self.get_parameter("drive_topic").get_parameter_value().string_value # set in launch file; different for simulator vs racecar
 
-        self.drive_pub = self.create_publisher(AckermannDriveStamped, DRIVE_TOPIC, 10)
+        self.drive_pub = self.create_publisher(AckermannDriveStamped, self.DRIVE_TOPIC, 10)
         self.error_pub = self.create_publisher(ParkingError, "/parking_error", 10)
-
+        
         self.create_subscription(ConeLocation, "/relative_cone", 
             self.relative_cone_callback, 1)
 
-        self.parking_distance = .75 # meters; try playing with this number!
+        self.parking_distance = 0.02 # meters; try playing with this number!
         self.relative_x = 0
         self.relative_y = 0
-
-        self.get_logger().info("Parking Controller Initialized")
+        self.prev_time = self.get_clock().now().to_msg().nanosec
+        self.KP = 0.9 #2.5
+        self.KD = 2.0
+        self.last_error = 0
+        self.get_logger().info(f"Parking Controller Initialized KP = {self.KP}")
+        self.get_logger().info(self.DRIVE_TOPIC)
 
     def relative_cone_callback(self, msg):
         self.relative_x = msg.x_pos
         self.relative_y = msg.y_pos
         drive_cmd = AckermannDriveStamped()
 
+        #drive_cmd.header.frame_id = "base_link"
+        #drive_cmd.header.stamp = self.get_clock().now().to_msg()
+
         #################################
         
         # YOUR CODE HERE
         # Use relative position and your control law to set drive_cmd
-        error = self.relative_x - self.parking_distance
-        angle = np.arctan2(self.relative_y, self.relative_x)
-
-        if (error > 0.2):
-            drive_cmd.drive.speed=1.
-        elif (np.abs(angle)<np.pi/15 and error<0.05):
-            drive_cmd.drive.speed=0.
-        elif (np.abs(angle)<np.pi/15 ):
-            drive_cmd.drive.speed=error
-        else: 
-            drive_cmd.drive.speed = error/(10**-10 + np.abs(error))
+        current_error = self.relative_x - self.parking_distance
+        #angle = 3.14 - np.arctan2(self.relative_y, self.relative_x)
+        angle = self.relative_y
         
-        if error < 0:
-            drive_cmd.drive.steering_angle = -angle
-        else:
-            drive_cmd.drive.steering_angle = angle
+        dt = self.get_clock().now().to_msg().nanosec - self.prev_time
+        self.prev_time = self.get_clock().now().to_msg().nanosec
+
+        # calculate our control signal based on Kp * error + Kd * d/dt(error)
+        distance_control_signal = self.KP*current_error + self.KD*(current_error/dt)
+        drive_cmd.drive.speed = 0.7
+        #max_speed = 0.99
+        #min_speed = 0.7
+        #if distance_control_signal > 0:
+        #    drive_cmd.drive.speed = max(min_speed, min(distance_control_signal, max_speed))
+        #else:
+        #    drive_cmd.drive.speed = min(-min_speed, max(distance_control_signal, -max_speed))
+
+        #if current_error > 0:
+        #     drive_cmd.drive.speed = angle
+        #else:
+        #     drive_cmd.drive.speed = -angle
+
+        #if current_error < 0.1 and current_error > -0.1:
+        #    drive_cmd.drive.speed = 0.
+
+
+        self.last_error = current_error
+        
+        #if current_error < 0:
+        #    drive_cmd.drive.steering_angle = -angle
+        #else:
+        #    drive_cmd.drive.steering_angle = angle
+        self.get_logger().info(f"ANGLE = {angle:.2f}")
+        drive_cmd.drive.steering_angle = angle
+        
 
         #################################
-
+        #self.get_logger().info(f"ERROR = {current_error:.2f}")
+        
         self.drive_pub.publish(drive_cmd)
         self.error_publisher()
 
