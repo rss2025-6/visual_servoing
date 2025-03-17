@@ -27,15 +27,15 @@ def image_print(img):
 	cv2.destroyAllWindows()
 
 def cd_sift_ransac(img, template):
-    """
-    Implement the cone detection using SIFT + RANSAC algorithm.
-    Input:
-        img: np.3darray; the input image with a cone to be detected
-    Return:
-        bbox: ((x1, y1), (x2, y2)); the bounding box in image coordinates (Y increasing downwards),
-            where (x1, y1) is the top-left pixel of the box
-            and (x2, y2) is the bottom-right pixel of the box.
-    """
+	"""
+	Implement the cone detection using SIFT + RANSAC algorithm.
+	Input:
+	    img: np.3darray; the input image with a cone to be detected
+	Return:
+	    bbox: ((x1, y1), (x2, y2)); the bounding box in image coordinates (Y increasing downwards),
+	        where (x1, y1) is the top-left pixel of the box
+	        and (x2, y2) is the bottom-right pixel of the box.
+	"""
 	# Minimum number of matching features
 	MIN_MATCH = 10 # Adjust this value as needed
 	# Create SIFT
@@ -72,6 +72,7 @@ def cd_sift_ransac(img, template):
 		# https://docs.opencv.org/3.4/d1/de0/tutorial_py_feature_homography.html
 		dst = cv2.perspectiveTransform(pts, M)
 		img2 = cv2.polylines(img,[np.int32(dst)],True,255,3,cv2.LINE_AA)
+		image_print(img)
 		image_print(img2)
 
 		# Extract bounding box
@@ -104,14 +105,16 @@ def cd_sift_ransac(img, template):
 		return ((0,0), (0,0))
 
 def cd_template_matching(img, template):
-    """
-    Implement the cone detection using template matching algorithm.
-    Input:
-        img: np.3darray; the input image with a cone to be detected
-    Return:
-        bbox: ((x1, y1), (x2, y2)); the bounding box in px (Y increases downward),
-            where (x1, y1) is the top-left corner and (x2, y2) is the bottom-right corner.
-    """
+	"""
+	Implement the cone detection using template matching algorithm.
+	Input:
+	    img: np.3darray; the input image with a cone to be detected
+	Return:
+	    bbox: ((x1, y1), (x2, y2)); the bounding box in px (Y increases downward),
+	        where (x1, y1) is the top-left corner and (x2, y2) is the bottom-right corner.
+	"""
+
+	# image_print(img)
 	template_canny = cv2.Canny(template, 50, 200)
 
 	# Perform Canny Edge detection on test image
@@ -162,6 +165,6 @@ def cd_template_matching(img, template):
 			
 		# Remember to resize the bounding box using the highest scoring scale
 		# x1,y1 pixel will be accurate, but x2,y2 needs to be correctly scaled
-	image_print(best_match_image)
+	# image_print(best_match_image)
 	########### YOUR CODE ENDS HERE ###########
 	return bounding_box
