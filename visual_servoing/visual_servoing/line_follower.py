@@ -7,14 +7,14 @@ import numpy as np
 from vs_msgs.msg import ConeLocation, ParkingError
 from ackermann_msgs.msg import AckermannDriveStamped
 
-class ParkingController(Node):
+class LineFollower(Node):
     """
     A controller for parking in front of a cone.
     Listens for a relative cone location and publishes control commands.
     Can be used in the simulator and on the real robot.
     """
     def __init__(self):
-        super().__init__("parking_controller")
+        super().__init__("line_follower")
 
         self.declare_parameter("drive_topic", "/vesc/low_level/input/navigation")
         self.DRIVE_TOPIC = self.get_parameter("drive_topic").get_parameter_value().string_value # set in launch file; different for simulator vs racecar
@@ -28,12 +28,6 @@ class ParkingController(Node):
         self.parking_distance = 0.02 # meters; try playing with this number!
         self.relative_x = 0
         self.relative_y = 0
-        self.prev_time = self.get_clock().now().to_msg().nanosec
-        self.KP = 0.9 #2.5
-        self.KD = 2.0
-        self.last_error = 0
-        self.get_logger().info(f"Parking Controller Initialized KP = {self.KP}")
-        self.get_logger().info(self.DRIVE_TOPIC)
 
     def relative_cone_callback(self, msg):
         self.relative_x = msg.x_pos
@@ -46,47 +40,15 @@ class ParkingController(Node):
         #################################
         
         # YOUR CODE HERE
-        # Use relative position and your control law to set drive_cmd
 
-        # get the current error based on distance to the cone
-        current_error = self.relative_x - self.parking_distance
+        # set constant speed for line following
+        drive_cmd.drive.speed = 0.7
 
-        # get angle between car and cone
-        angle = np.arctan2(self.relative_y, self.relative_x)
+        # set steering angle based on distance & side of the line
+        drive_cmd.drive.steering_angle = self.relative_y
         
-        # save dt and previous time for derivative control
-        dt = self.get_clock().now().to_msg().nanosec - self.prev_time
-        self.prev_time = self.get_clock().now().to_msg().nanosec
-
-        # calculate our control signal based on Kp * error + Kd * d/dt(error)
-        distance_control_signal = self.KP*current_error + self.KD*(current_error/dt)
-
-        # set drive speed based on distance_control_signal, clipping between min_speed and max_speed
-        max_speed = 0.99
-        min_speed = 0.7
-        if distance_control_signal > 0:
-           drive_cmd.drive.speed = max(min_speed, min(distance_control_signal, max_speed))
-        else:
-           drive_cmd.drive.speed = min(-min_speed, max(distance_control_signal, -max_speed))
-
-        # set direction to turn based on whether going forward or backward
-        if current_error > 0:
-            drive_cmd.drive.steering_angle = angle
-        else:
-            drive_cmd.drive.steering_angle = -angle
-
-        # add stopping threshold
-        if current_error < 0.1 and current_error > -0.1:
-           drive_cmd.drive.speed = 0.
-
-
-        # save last error
-        self.last_error = current_error
-        
-        # self.get_logger().info(f"ANGLE = {drive_cmd.drive.steering_angle :.2f}")        
 
         #################################
-        #self.get_logger().info(f"ERROR = {current_error:.2f}")
         
         self.drive_pub.publish(drive_cmd)
         self.error_publisher()
@@ -112,8 +74,8 @@ class ParkingController(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    pc = ParkingController()
-    rclpy.spin(pc)
+    lf = LineFollower()
+    rclpy.spin(lf)
     rclpy.shutdown()
 
 if __name__ == '__main__':
